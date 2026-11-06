@@ -436,6 +436,16 @@ p{margin:0}
 .ctx-pick[aria-pressed="true"]{box-shadow:inset 0 0 0 1px var(--accent)}
 .cal-day{border-radius:6px}
 .nav-item,.tree-link{border-radius:8px}
+.tp-rep{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tp-rep .tp-btn{font-family:var(--f-body);font-size:13.5px;padding:10px 8px}
+.tp-wd{grid-template-columns:repeat(7,minmax(0,1fr))}
+.rep-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14.5px}
+.rep-row input,.rep-row select{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--fg);min-width:0;font-size:15px}
+.rep-row input{width:70px}
+.rep-next{font-family:var(--f-mono);font-size:12px;color:var(--accent);line-height:1.6}
+.chip-rep{color:var(--accent)}
+.task.is-ghost{opacity:.5}
+.check.is-ghost{border-style:dashed}
 .scale{display:flex;flex-direction:column;gap:6px;margin-top:6px}
 .scale-nums{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:10.5px;color:var(--muted)}
 .scale-track{position:relative;height:12px}
@@ -646,7 +656,9 @@ const ICON={
   starLine:S('<path d="M12 3.5l2.6 5.3 5.9.8-4.3 4.2 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.6l5.9-.8z"/>',20),
   starFill:`<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${P.star}</svg>`,
   db:S('<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/>',18),
-  edit:S('<path d="M4 20h4L19 9l-4-4L4 16z"/>',16)
+  edit:S('<path d="M4 20h4L19 9l-4-4L4 16z"/>',16),
+  rep:S('<path d="M17 3l3 3-3 3"/><path d="M20 6H9a5 5 0 0 0-5 5v1"/><path d="M7 21l-3-3 3-3"/><path d="M4 18h11a5 5 0 0 0 5-5v-1"/>',12),
+  repMd:S('<path d="M17 3l3 3-3 3"/><path d="M20 6H9a5 5 0 0 0-5 5v1"/><path d="M7 21l-3-3 3-3"/><path d="M4 18h11a5 5 0 0 0 5-5v-1"/>',18)
 };
 const BIG={plan:F(P.cal,34),projects:F(P.grid,34),contexts:F(P.pin,30),inbox:F(P.tray,30),week:F(P.week,26),fav:F(P.star,26),done:F(P.done,26)};
 
@@ -774,6 +786,7 @@ function taskRow(t,opts){
     chips.push(`<span class="chip chip-date${cls}">${esc(fmtDate(t.date))}${t.time?' · '+esc(t.time):''}</span>`);
   } else if(t.time){ chips.push(`<span class="chip chip-date">${esc(t.time)}</span>`) }
   if(t.duration) chips.push(`<span class="chip chip-date">${ICON.clock}${fmtDur(t.duration)}</span>`);
+  if(t.repeat&&!t.done) chips.push(`<span class="chip chip-rep">${ICON.rep}${esc(repText(t.repeat))}</span>`);
   for(const cid of (t.contexts||[])){const c=get('contexts',cid); if(c) chips.push(`<span class="chip chip-ctx">@${esc(c.name)}</span>`)}
   if(t.note&&t.note.trim()) chips.push(`<span class="chip" title="Есть заметка">${ICON.note}</span>`);
   return `<li class="task${t.done?' is-done':''}${editingId===t.id?' is-open':''}"><button class="check" data-act="toggle-done" data-id="${t.id}" aria-pressed="${!!t.done}" aria-label="${t.done?'Вернуть в работу':'Отметить выполненной'}">${ICON.check}</button><button class="task-body" data-act="edit" data-id="${t.id}"><span class="task-title">${t.title?esc(t.title):'<em>Без названия</em>'}</span>${chips.length?`<span class="task-meta">${chips.join('')}</span>`:''}</button></li>`;
@@ -864,10 +877,14 @@ const VIEWS={
     let h=header('7 дней','Задачи с датой на ближайшую неделю.')+quickAdd('Задача на сегодня…',{date:t});
     const over=tasks.filter(x=>x.date&&x.date<t);
     if(over.length) h+=group('Просрочено',over,{},'is-warn');
+    const ghosts={}, end=addDays(t,6);
+    for(const x of tasks) if(x.repeat&&x.date){let d=x.date,g=0; while(g++<60){d=nextOcc(x.repeat,d); if(d>end) break; if(d>=t) (ghosts[d]=ghosts[d]||[]).push(x)}}
+    const ghostRow=x=>`<li class="task is-ghost"><span class="check is-ghost" aria-hidden="true"></span><button class="task-body" data-act="edit" data-id="${x.id}"><span class="task-title">${x.title?esc(x.title):'<em>Без названия</em>'}</span><span class="task-meta"><span class="chip chip-rep">${ICON.rep}Повтор</span>${x.time?`<span class="chip chip-date">${esc(x.time)}</span>`:''}</span></button></li>`;
     for(let i=0;i<7;i++){
-      const day=addDays(t,i), dt=tasks.filter(x=>x.date===day), d=parseISO(day);
+      const day=addDays(t,i), dt=tasks.filter(x=>x.date===day), gh=ghosts[day]||[], d=parseISO(day);
       const name=i===0?'Сегодня':i===1?'Завтра':WDF[d.getDay()][0].toUpperCase()+WDF[d.getDay()].slice(1);
-      h+=`<section class="group"><div class="group-head group-day"><h2>${name}</h2><span class="day-date">${d.getDate()} ${MONG[d.getMonth()]}</span>${dt.length?`<span class="count">${dt.length}</span>`:''}</div>${dt.length?list(dt,{showDate:false}):'<p class="empty-soft">Свободно</p>'}</section>`;
+      const n=dt.length+gh.length;
+      h+=`<section class="group"><div class="group-head group-day"><h2>${name}</h2><span class="day-date">${d.getDate()} ${MONG[d.getMonth()]}</span>${n?`<span class="count">${n}</span>`:''}</div>${n?`<ul class="tasks">${sortTasks(dt).map(x=>taskRow(x,{showDate:false})).join('')}${gh.map(ghostRow).join('')}</ul>`:'<p class="empty-soft">Свободно</p>'}</section>`;
     }
     return h;
   },
@@ -888,11 +905,11 @@ const VIEWS={
   project(){
     const p=get('projects',route.id); if(!p) throw new Error('nf');
     const tasks=all('tasks').filter(t=>t.projectId===p.id);
-    const done=tasks.filter(t=>t.done).length;
+    const own=tasks.filter(t=>!t.repeatOf), done=own.filter(t=>t.done).length;
     const pillCls=p.status==='active'?'':p.status==='finished'?' is-ok':' is-muted';
     return crumbs(folderPath(p.folderId))
       +header(`${esc(p.name)}`,`<span class="pill pill-sm${pillCls}">${STATUS[p.status]||STATUS.active}</span>`,`<button class="icon-btn${p.fav?' is-on':''}" data-act="fav" data-kind="projects" data-id="${p.id}" aria-pressed="${!!p.fav}" aria-label="${p.fav?'Убрать из избранного':'В избранное'}">${p.fav?ICON.starFill:ICON.starLine}</button><button class="btn btn-sm" data-act="edit-project" data-id="${p.id}">${ICON.edit}Изменить</button>`)
-      +`<div class="goal"><span class="goal-label">Цель</span>${p.goal&&p.goal.trim()?`<p class="goal-text">${esc(p.goal)}</p>`:`<p class="goal-text is-empty">Цель не записана. Сформулируйте результат, ради которого существует проект. <button class="link-btn" data-act="edit-project" data-id="${p.id}">Записать цель</button></p>`}${tasks.length?progress(done,tasks.length):''}</div>`
+      +`<div class="goal"><span class="goal-label">Цель</span>${p.goal&&p.goal.trim()?`<p class="goal-text">${esc(p.goal)}</p>`:`<p class="goal-text is-empty">Цель не записана. Сформулируйте результат, ради которого существует проект. <button class="link-btn" data-act="edit-project" data-id="${p.id}">Записать цель</button></p>`}${own.length?progress(done,own.length):''}</div>`
       +quickAdd(`Задача в «${p.name}»…`,{projectId:p.id})
       +taskBlock(tasks,{showProject:false},'В проекте пока нет задач. Запишите первый шаг к цели.');
   },
@@ -1096,6 +1113,7 @@ function renderEditor(force){
       <div class="field"><span class="field-label">Длительность</span><button class="picker-btn${t.duration?'':' is-empty'}" data-act="pick" data-p="dur" aria-expanded="${edPicker==='dur'}"><span class="pb-val">${t.duration?fmtDur(t.duration):'—'}</span>${edPicker==='dur'?ICON.chevU:ICON.chevD}</button></div>
     </div>
     ${edPicker==='time'?timeHTML(t.time):''}${edPicker==='dur'?durHTML(t.duration):''}
+    <div class="field"><span class="field-label">Повтор</span><button class="picker-btn${t.repeat?'':' is-empty'}" data-act="pick" data-p="rep" aria-expanded="${edPicker==='rep'}">${ICON.repMd}<span class="pb-val">${esc(repText(t.repeat))}</span>${edPicker==='rep'?ICON.chevU:ICON.chevD}</button>${edPicker==='rep'?repHTML(t):''}</div>
     <div class="field"><span class="field-label">Контексты</span><div class="ctx-picks">${ctxs.map(({r,d})=>`<button class="ctx-pick" data-act="ed-ctx" data-id="${r.id}" aria-pressed="${(t.contexts||[]).includes(r.id)}">${d?'↳ ':''}@${esc(r.name)}</button>`).join('')}<button class="ctx-pick is-add" data-act="new-context" data-for-task="1">+ новый</button></div></div>
     <label class="field" for="ed-note"><span class="field-label">Заметка</span><textarea id="ed-note" rows="6" placeholder="Детали, ссылки, мысли">${esc(t.note||'')}</textarea></label>
     <div class="ed-foot"><span class="ed-stamp" id="ed-stamp">${stampText(t)}</span><div id="ed-del">${delBlock()}</div></div>
@@ -1103,6 +1121,80 @@ function renderEditor(force){
   el.scrollTop=scroll;
   autosize($('#ed-title'));
 }
+/* ===== recurrence ===== */
+const WDS=['пн','вт','ср','чт','пт','сб','вс'];
+const WD_NOM=['понедельник','вторник','среда','четверг','пятница','суббота','воскресенье'];
+const WD_ACC=['понедельник','вторник','среду','четверг','пятницу','субботу','воскресенье'];
+const WD_G=['m','m','f','m','f','f','n'];
+const ORD={m:['первый','второй','третий','четвёртый'],f:['первую','вторую','третью','четвёртую'],n:['первое','второе','третье','четвёртое']};
+const LAST={m:'последний',f:'последнюю',n:'последнее'};
+const EACH={m:'Каждый',f:'Каждую',n:'Каждое'};
+const monIdx=d=>(d.getDay()+6)%7;
+const daysIn=(y,m)=>new Date(y,m+1,0).getDate();
+function nthWeekday(y,m,nth,wd){
+  if(nth===-1){const last=daysIn(y,m), d=new Date(y,m,last); return new Date(y,m,last-((monIdx(d)-wd+7)%7))}
+  const off=(wd-monIdx(new Date(y,m,1))+7)%7; return new Date(y,m,1+off+(nth-1)*7);
+}
+function monthDay(r,y,m){return r.mode==='nth'?nthWeekday(y,m,r.nth,r.wd):new Date(y,m,Math.min(r.day,daysIn(y,m)))}
+function makeRule(freq,base){
+  const d=parseISO(base), mi=monIdx(d), dom=d.getDate(), c=Math.ceil(dom/7), nth=c<=4?c:-1;
+  if(freq==='day') return {freq:'day',every:1};
+  if(freq==='week') return {freq:'week',every:1,wds:[mi]};
+  if(freq==='month') return {freq:'month',every:1,mode:'date',day:dom,nth,wd:mi};
+  return {freq:'year',every:1,day:dom,month:d.getMonth()};
+}
+function ruleMatches(r,iso){
+  const d=parseISO(iso), y=d.getFullYear(), m=d.getMonth();
+  if(r.freq==='day') return true;
+  if(r.freq==='week') return (r.wds||[]).includes(monIdx(d));
+  if(r.freq==='month') return isoDate(monthDay(r,y,m))===iso;
+  if(r.freq==='year') return m===r.month&&d.getDate()===Math.min(r.day,daysIn(y,m));
+  return false;
+}
+function weekStartMs(iso){const d=parseISO(iso); d.setDate(d.getDate()-monIdx(d)); return d.getTime()}
+function nextOcc(r,iso){
+  const n=Math.max(1,Math.round(Number(r.every))||1), d=parseISO(iso);
+  if(r.freq==='day') return addDays(iso,n);
+  if(r.freq==='week'){
+    const wds=(r.wds&&r.wds.length)?r.wds:[monIdx(d)], a=weekStartMs(r.anchor||iso);
+    for(let i=1;i<=7*n+7;i++){
+      const c=addDays(iso,i), wk=Math.round((weekStartMs(c)-a)/(7*864e5));
+      if(wds.includes(monIdx(parseISO(c)))&&((wk%n)+n)%n===0) return c;
+    }
+    return addDays(iso,7*n);
+  }
+  if(r.freq==='month'){const t=new Date(d.getFullYear(),d.getMonth()+n,1); return isoDate(monthDay(r,t.getFullYear(),t.getMonth()))}
+  if(r.freq==='year'){const y=d.getFullYear()+n; return isoDate(new Date(y,r.month,Math.min(r.day,daysIn(y,r.month))))}
+  return addDays(iso,1);
+}
+function firstOnOrAfter(r,iso){
+  if(ruleMatches(r,iso)) return iso;
+  const d=parseISO(iso), y=d.getFullYear(), m=d.getMonth();
+  if(r.freq==='month'){const c=isoDate(monthDay(r,y,m)); if(c>=iso) return c; const t=new Date(y,m+1,1); return isoDate(monthDay(r,t.getFullYear(),t.getMonth()))}
+  if(r.freq==='year'){const c=isoDate(new Date(y,r.month,Math.min(r.day,daysIn(y,r.month)))); if(c>=iso) return c; return isoDate(new Date(y+1,r.month,Math.min(r.day,daysIn(y+1,r.month))))}
+  if(r.freq==='week'){for(let i=1;i<=7;i++){const c=addDays(iso,i); if(ruleMatches(r,c)) return c}}
+  return iso;
+}
+function nextAfter(r,from,today){let n=nextOcc(r,from),g=0; while(n<today&&g++<2000) n=nextOcc(r,n); return n}
+function repText(r){
+  if(!r) return 'Без повтора';
+  const n=Math.max(1,Math.round(Number(r.every))||1);
+  if(r.freq==='day') return n===1?'Каждый день':`Каждые ${plural(n,['день','дня','дней'])}`;
+  if(r.freq==='week'){
+    const w=(r.wds||[]).slice().sort((a,b)=>a-b), work=w.length===5&&w.join()==='0,1,2,3,4';
+    if(n===1&&work) return 'По будням';
+    if(n===1&&w.length===7) return 'Каждый день';
+    return `${n===1?'Каждую неделю':`Каждые ${plural(n,['неделю','недели','недель'])}`}: ${w.map(i=>WDS[i]).join(', ')}`;
+  }
+  if(r.freq==='month'){
+    const head=n===1?'Каждый месяц':`Каждые ${plural(n,['месяц','месяца','месяцев'])}`;
+    if(r.mode==='nth'){const g=WD_G[r.wd], o=r.nth===-1?LAST[g]:ORD[g][r.nth-1]; return n===1?`${EACH[g]} ${o} ${WD_ACC[r.wd]} месяца`:`${head}: ${o} ${WD_ACC[r.wd]}`}
+    return `${head}, ${r.day}-го`;
+  }
+  if(r.freq==='year') return `${n===1?'Каждый год':`Каждые ${plural(n,['год','года','лет'])}`}, ${r.day} ${MONG[r.month]}`;
+  return 'Повтор';
+}
+/* ===== end recurrence ===== */
 /* ---- dropdown pickers: calendar, time, duration ---- */
 const MONN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 function fmtDateFull(iso){
@@ -1142,6 +1234,35 @@ function timeHTML(cur){
 function durHTML(cur){
   return `<div class="pop" role="group" aria-label="Длительность"><div class="tp-grid tp-dur">${DURS.map(m=>`<button class="tp-btn${Number(cur||0)===m?' is-sel':''}" data-act="dur-set" data-v="${m}">${m?fmtDur(m):'Без длительности'}</button>`).join('')}</div></div>`;
 }
+function repHTML(t){
+  const base=t.date||todayISO(), d=parseISO(base), mi=monIdx(d), dom=d.getDate(), c=Math.ceil(dom/7), nth=c<=4?c:-1;
+  const r=t.repeat, cur=r||makeRule('week',base);
+  const pre=[['none','Без повтора'],['day','Каждый день'],['workdays','По будням'],['week',`Каждую неделю · ${WDS[mi]}`],['month',`Каждый месяц · ${dom}-го`],['monthnth',`Каждый месяц · ${nth===-1?'последн.':nth+'-й'} ${WDS[mi]}`],['year',`Каждый год · ${dom} ${MONG[d.getMonth()]}`]];
+  let h=`<div class="pop" role="group" aria-label="Повтор"><div class="tp-grid tp-rep">${pre.map(([v,l])=>`<button class="tp-btn" data-act="rep-preset" data-v="${v}">${esc(l)}</button>`).join('')}</div>`;
+  h+=`<span class="pop-label">Настроить</span><div class="rep-row"><span>Каждые</span><input id="rep-every" type="number" inputmode="numeric" min="1" max="99" value="${cur.every||1}" aria-label="Интервал"><select id="rep-freq" aria-label="Период">${[['day','дн.'],['week','нед.'],['month','мес.'],['year','г.']].map(([v,l])=>`<option value="${v}"${cur.freq===v?' selected':''}>${l}</option>`).join('')}</select></div>`;
+  if(cur.freq==='week') h+=`<div class="tp-grid tp-wd">${WDS.map((w,i)=>{const on=(cur.wds||[]).includes(i);return `<button class="tp-btn${on?' is-sel':''}" data-act="rep-wd" data-v="${i}" aria-pressed="${on}">${w}</button>`}).join('')}</div>`;
+  if(cur.freq==='month'){
+    const md=cur.mode||'date', nn=cur.nth||nth, ww=cur.wd!=null?cur.wd:mi;
+    h+=`<div class="tp-grid tp-rep"><button class="tp-btn${md==='date'?' is-sel':''}" data-act="rep-mode" data-v="date" aria-pressed="${md==='date'}">По числу: ${cur.day||dom}-го</button><button class="tp-btn${md==='nth'?' is-sel':''}" data-act="rep-mode" data-v="nth" aria-pressed="${md==='nth'}">По дню недели</button></div>`;
+    if(md==='nth') h+=`<div class="rep-row"><select id="rep-nth" aria-label="Какой по счёту">${[[1,'1-й'],[2,'2-й'],[3,'3-й'],[4,'4-й'],[-1,'последний']].map(([v,l])=>`<option value="${v}"${nn===v?' selected':''}>${l}</option>`).join('')}</select><select id="rep-wdsel" aria-label="День недели">${WD_NOM.map((w,i)=>`<option value="${i}"${ww===i?' selected':''}>${w}</option>`).join('')}</select><span>месяца</span></div>`;
+  }
+  if(r){const nx=[]; let x=t.date||todayISO(); for(let i=0;i<3;i++){x=nextOcc(r,x); nx.push(fmtDate(x))} h+=`<p class="rep-next">${esc(repText(r))}<br>Дальше: ${esc(nx.join(' · '))}</p>`}
+  return h+'</div>';
+}
+function applyRule(t,rule){
+  if(!rule){patch('tasks',t.id,{repeat:null}); return}
+  const today=todayISO(), start=(t.repeat&&t.repeat.start)||t.date||today;
+  rule.start=start;
+  const d=firstOnOrAfter(rule,start>today?start:today); rule.anchor=d;
+  patch('tasks',t.id,{repeat:rule,date:d});
+}
+function moveDate(t,d){
+  const f={date:d};
+  if(t.repeat&&d){const r=JSON.parse(JSON.stringify(t.repeat)); r.start=d; r.anchor=d; f.repeat=r}
+  patch('tasks',t.id,f);
+}
+function curRule(t){return t.repeat?JSON.parse(JSON.stringify(t.repeat)):makeRule('week',t.date||todayISO())}
+function afterRule(){renderSide(); renderMain(); renderEditor(true)}
 function autosize(el){if(!el)return;el.style.height='auto';el.style.height=el.scrollHeight+'px'}
 function openEditor(id){editingId=id; delConfirm=false; edPicker=null; calMonth=null; closeFab(); renderEditor(true); renderMain()}
 function closeEditor(){editingId=null;delConfirm=false;renderEditor();renderMain()}
@@ -1342,6 +1463,15 @@ function quickSubmit(form){
 }
 function toggleDone(id){
   const t=get('tasks',id); if(!t) return;
+  if(!t.done&&t.repeat){
+    const today=todayISO(), prev=t.date, from=t.date||today;
+    const copy=create('tasks',{title:t.title,note:t.note||'',projectId:t.projectId||null,contexts:(t.contexts||[]).slice(),date:from,time:t.time||null,duration:t.duration||0,done:true,doneAt:Date.now(),repeatOf:t.id});
+    const nx=nextAfter(t.repeat,from,today);
+    patch('tasks',id,{date:nx});
+    render();
+    toast(`Выполнено. Следующий раз: ${fmtDate(nx)}`,'Вернуть',()=>{purge('tasks',copy.id); patch('tasks',id,{date:prev}); render()});
+    return;
+  }
   const v=!t.done;
   patch('tasks',id,{done:v,doneAt:v?Date.now():null});
   render();
@@ -1385,7 +1515,7 @@ document.addEventListener('click',e=>{
     case 'fav': { const k=b.dataset.kind, r=get(k,id); if(!r) break; patch(k,id,{fav:!r.fav}); render(); toast(r.fav?'Добавлено в избранное':'Убрано из избранного'); break; }
     case 'ed-date': {
       const v=b.dataset.v; const d=v==='clear'?null:addDays(todayISO(),Number(v));
-      patch('tasks',editingId,{date:d}); edPicker=null; calMonth=null; renderSide(); renderMain(); renderEditor(true); break;
+      { const tk=get('tasks',editingId); if(tk) moveDate(tk,d); } edPicker=null; calMonth=null; renderSide(); renderMain(); renderEditor(true); break;
     }
     case 'pick': { const p=b.dataset.p; edPicker=edPicker===p?null:p; calMonth=null; renderEditor(true); break; }
     case 'cal-nav': {
@@ -1393,10 +1523,32 @@ document.addEventListener('click',e=>{
       if(v===0){calMonth=todayISO().slice(0,7)} else {const [y,m]=(calMonth||((t&&t.date)||todayISO()).slice(0,7)).split('-').map(Number); const d=new Date(y,m-1+v,1); calMonth=`${d.getFullYear()}-${pad(d.getMonth()+1)}`}
       renderEditor(true); break;
     }
-    case 'cal-day': patch('tasks',editingId,{date:b.dataset.v}); edPicker=null; calMonth=null; renderSide(); renderMain(); renderEditor(true); break;
+    case 'cal-day': { const tk=get('tasks',editingId); if(tk) moveDate(tk,b.dataset.v); } edPicker=null; calMonth=null; renderSide(); renderMain(); renderEditor(true); break;
     case 'time-h': { const t=get('tasks',editingId); if(!t) break; const mm=(t.time||'').split(':')[1]||'00'; patch('tasks',t.id,{time:`${b.dataset.v}:${mm}`}); renderMain(); renderEditor(true); break; }
     case 'time-m': { const t=get('tasks',editingId); if(!t) break; const hh=(t.time||'').split(':')[0]||'09'; patch('tasks',t.id,{time:`${hh}:${b.dataset.v}`}); edPicker=null; renderMain(); renderEditor(true); break; }
     case 'time-clear': patch('tasks',editingId,{time:null}); edPicker=null; renderMain(); renderEditor(true); break;
+    case 'rep-preset': {
+      const t=get('tasks',editingId); if(!t) break; const v=b.dataset.v, base=t.date||todayISO();
+      let r=null;
+      if(v==='day') r=makeRule('day',base);
+      else if(v==='workdays') r={freq:'week',every:1,wds:[0,1,2,3,4]};
+      else if(v==='week') r=makeRule('week',base);
+      else if(v==='month') r=makeRule('month',base);
+      else if(v==='monthnth'){r=makeRule('month',base); r.mode='nth'}
+      else if(v==='year') r=makeRule('year',base);
+      applyRule(t,r); edPicker=null; afterRule();
+      if(r) toast(`Повтор: ${repText(r).toLowerCase()}`); break;
+    }
+    case 'rep-wd': {
+      const t=get('tasks',editingId); if(!t) break; const r=curRule(t); if(r.freq!=='week'){r.freq='week'}
+      const i=Number(b.dataset.v), w=new Set(r.wds||[]); if(w.has(i)){if(w.size>1) w.delete(i)} else w.add(i);
+      r.wds=[...w].sort((a,c)=>a-c); applyRule(t,r); afterRule(); break;
+    }
+    case 'rep-mode': {
+      const t=get('tasks',editingId); if(!t) break; const r=curRule(t);
+      if(r.freq!=='month') Object.assign(r,makeRule('month',t.date||todayISO()),{every:r.every||1});
+      r.mode=b.dataset.v; applyRule(t,r); afterRule(); break;
+    }
     case 'dur-set': patch('tasks',editingId,{duration:Number(b.dataset.v)||0}); edPicker=null; renderMain(); renderEditor(true); break;
     case 'ed-ctx': {
       const t=get('tasks',editingId); if(!t) break;
@@ -1465,6 +1617,14 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('change',e=>{
   const el=e.target, t=get('tasks',editingId); if(!t) return;
   if(el.id==='ed-project'){ patch('tasks',t.id,{projectId:el.value||null}); renderSide(); renderMain(); }
+  else if(el.id==='rep-every'||el.id==='rep-freq'||el.id==='rep-nth'||el.id==='rep-wdsel'){
+    let r=curRule(t);
+    if(el.id==='rep-every') r.every=Math.min(99,Math.max(1,Math.round(Number(el.value))||1));
+    if(el.id==='rep-freq'&&el.value!==r.freq) r=Object.assign(makeRule(el.value,t.date||todayISO()),{every:r.every||1});
+    if(el.id==='rep-nth'){r.mode='nth'; r.nth=Number(el.value)}
+    if(el.id==='rep-wdsel'){r.mode='nth'; r.wd=Number(el.value)}
+    applyRule(t,r); afterRule();
+  }
   else return;
   const st=$('#ed-stamp'); if(st) st.textContent=stampText(get('tasks',t.id));
 });
