@@ -484,6 +484,44 @@ p{margin:0}
   .view-head h1{display:none}
 }
 
+
+/* ---------- mind map ---------- */
+.main.is-map{display:flex;flex-direction:column;overflow:hidden}
+.map-wrap{position:relative;flex:1;min-height:0;overflow:hidden;touch-action:none;cursor:grab;background-color:var(--bg);background-image:radial-gradient(circle,#2a2925 1px,transparent 1.4px)}
+.map-wrap.is-panning{cursor:grabbing}
+.map-stage{position:absolute;left:0;top:0;transform-origin:0 0}
+.map-edges{position:absolute;left:0;top:0;overflow:visible}
+.map-edges path{fill:none;stroke:#4a463e;stroke-width:1.5}
+.map-edges path.e-main{stroke:var(--accent-line);stroke-width:2}
+.mn{position:absolute;box-sizing:border-box;display:flex;align-items:center;gap:9px;padding:0 12px;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--fg);user-select:none;-webkit-user-select:none;cursor:grab;box-shadow:inset 0 1px 0 rgba(255,240,210,.05),0 2px 0 rgba(0,0,0,.5);min-width:0}
+.mn>svg{color:var(--accent)}
+.mn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mn-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mn-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.mn-meta,.mn-due{font-family:var(--f-mono);font-size:11px;color:var(--muted);text-transform:uppercase}
+.mn-due.is-today{color:var(--accent)}
+.mn-due.is-over{color:var(--danger)}
+.mn-root{justify-content:center;background:radial-gradient(circle at 50% 0,#3a3222,#1f1b14 75%);border-color:var(--accent-line);border-radius:14px}
+.mn-root .mn-name{flex:none;font-family:var(--f-display);text-transform:uppercase;font-weight:600;letter-spacing:.1em;font-size:20px;color:var(--fg-hi)}
+.mn-folder .mn-name,.mn-inbox .mn-name{font-family:var(--f-display);text-transform:uppercase;font-weight:500;letter-spacing:.12em;font-size:14px;color:var(--accent)}
+.mn-project .mn-name{color:var(--fg-hi);font-weight:500}
+.mn-project.is-paused{opacity:.6}
+.mn-task{background:#16171a;border-radius:8px;padding:0 10px;font-size:14px}
+.mn-task .check{width:18px;height:18px;flex:none}
+.mn-rep{color:var(--accent);display:flex}
+.mn-fold{width:26px;height:26px;display:grid;place-items:center;border-radius:6px;color:var(--muted);flex:none}
+.mn-fold:hover{background:var(--surface-2);color:var(--fg)}
+.mn-add{position:absolute;right:-13px;top:50%;margin-top:-13px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 40% 30%,#d8c497,#a8946a 45%,#6f603f);color:#2c2312;opacity:0;transition:opacity .15s;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.mn.is-left .mn-add{right:auto;left:-13px}
+.mn:hover .mn-add,.mn:focus-within .mn-add,.mn:focus .mn-add{opacity:1}
+.mn.is-dragging{cursor:grabbing;opacity:.88;z-index:5}
+.mn.is-drop{box-shadow:0 0 0 2px var(--accent),0 0 18px rgba(196,160,102,.35)}
+.map-tools{position:absolute;top:12px;right:12px;z-index:3;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.map-tools .btn{background:var(--surface);min-width:38px}
+.map-hint{position:absolute;left:16px;right:120px;bottom:12px;font-family:var(--f-mono);font-size:11px;color:var(--muted);pointer-events:none}
+@media (hover:none){.mn-add{opacity:1}}
+@media (max-width:859px){.map-hint{display:none}.map-wrap{margin-bottom:calc(68px + env(safe-area-inset-bottom,0px))}}
+
 /* ---------- sign-in & sync ---------- */
 .auth{position:fixed;inset:0;z-index:80;background:var(--bg);display:grid;place-items:center;padding:calc(24px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px));overflow-y:auto}
 .auth-card{width:min(420px,100%);display:flex;flex-direction:column;gap:16px}
@@ -658,6 +696,7 @@ const ICON={
   starFill:`<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${P.star}</svg>`,
   db:S('<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/>',18),
   edit:S('<path d="M4 20h4L19 9l-4-4L4 16z"/>',16),
+  map:S('<circle cx="12" cy="12" r="2.6"/><circle cx="4.5" cy="6" r="1.8"/><circle cx="19.5" cy="6" r="1.8"/><circle cx="4.5" cy="18" r="1.8"/><circle cx="19.5" cy="18" r="1.8"/><path d="M10 10.6L6 7.2M14 10.6L18 7.2M10 13.4L6 16.8M14 13.4L18 16.8"/>',18),
   rep:S('<path d="M17 3l3 3-3 3"/><path d="M20 6H9a5 5 0 0 0-5 5v1"/><path d="M7 21l-3-3 3-3"/><path d="M4 18h11a5 5 0 0 0 5-5v-1"/>',12),
   repMd:S('<path d="M17 3l3 3-3 3"/><path d="M20 6H9a5 5 0 0 0-5 5v1"/><path d="M7 21l-3-3 3-3"/><path d="M4 18h11a5 5 0 0 0 5-5v-1"/>',18)
 };
@@ -665,7 +704,7 @@ const BIG={plan:F(P.cal,34),projects:F(P.grid,34),contexts:F(P.pin,30),inbox:F(P
 
 /* ================= state & routing ================= */
 let route={view:'home'}, editingId=null, query='', toastFn=null, toastTimer=null, modalState=null, delConfirm=false, fabOpen=false, fabItems=[], edPicker=null, calMonth=null;
-const VIEWNAMES={home:'Главная',inbox:'Место хаоса',today:'План дня',week:'7 дней',projects:'Проекты',contexts:'Контексты',favorites:'Избранное',search:'Поиск',logbook:'Выполнено',trash:'Корзина'};
+const VIEWNAMES={home:'Главная',inbox:'Место хаоса',today:'План дня',week:'7 дней',projects:'Проекты',contexts:'Контексты',favorites:'Избранное',search:'Поиск',logbook:'Выполнено',trash:'Корзина',map:'Майнд-карта'};
 function parseHash(){
   const h=(location.hash||'').slice(1);
   const m=h.match(/^(project|folder|context)-([0-9a-f-]{8,})$/i);
@@ -746,6 +785,7 @@ function renderSide(){
       ${navItem('favorites','Избранное',c.fav)}
       ${navItem('logbook','Выполнено',0)}
       ${navItem('search','Поиск',0)}
+      ${navItem('map','Майнд-карта',0)}
     </nav>
     <div class="sec">
       <div class="sec-head"><button class="sec-title sec-title-btn" data-act="go" data-view="projects">Проекты</button><span class="sec-actions"><button class="mini-btn" data-act="new-folder" title="Новая категория">${ICON.plus}Категория</button><button class="mini-btn" data-act="new-project" title="Новый проект">${ICON.plus}Проект</button></span></div>
@@ -992,6 +1032,12 @@ function topbar(){
   return `<div class="topbar"><button class="icon-btn" data-act="back" aria-label="Назад">${ICON.back}</button><span class="tb-title">${esc(viewTitle())}</span>${right}</div>`;
 }
 function renderMain(){
+  const mainEl=$('#main');
+  if(route.view==='map'){
+    if(MAP.drag||MAP.pan){MAP.dirty=true;return}
+    mainEl.classList.add('is-map'); mainEl.innerHTML=topbar()+mapShell(); drawMap(); return;
+  }
+  mainEl.classList.remove('is-map');
   let out;
   try{ out=(VIEWS[route.view]||VIEWS.home)(); }
   catch(e){ route={view:'home'}; out=VIEWS.home(); }
@@ -1007,6 +1053,181 @@ function renderBottom(){
   const fd=$('#fab-desk'); fd.innerHTML=ICON.plusBig; fd.classList.toggle('is-open',fabOpen); fd.setAttribute('aria-expanded',String(fabOpen));
 }
 
+/* ================= mind map ================= */
+const MAP={tx:0,ty:0,k:1,init:false,m:null,drag:null,pan:null,dirty:false,suppress:false,viewTimer:null};
+const NS={root:[220,66],inbox:[200,48],folder:[200,48],project:[240,60],task:[240,42]};
+const MGX=64, MGY=12;
+function stayOrGo(r){ if(route.view==='map') render(); else setTimeout(()=>go(r),0) }
+function mapShell(){
+  return `<div class="map-wrap" id="map-wrap"><div class="map-stage" id="map-stage"><svg class="map-edges" id="map-edges" width="1" height="1" aria-hidden="true"></svg><div id="map-nodes"></div></div>
+  <div class="map-tools"><button class="btn btn-sm" data-act="map-zoom" data-v="-1" aria-label="Уменьшить">−</button><button class="btn btn-sm" data-act="map-zoom" data-v="1" aria-label="Увеличить">+</button><button class="btn btn-sm" data-act="map-fit">Показать всё</button><button class="btn btn-sm" data-act="map-reset">Разложить заново</button></div>
+  <p class="map-hint">Тяните узел, чтобы передвинуть · бросьте на другой узел, чтобы перенести · двойной клик открывает · Ctrl + колесо — масштаб</p></div>`;
+}
+function mapModel(){
+  const nodes=[], byId={};
+  const add=n=>{n.kids=[]; nodes.push(n); byId[n.key]=n; if(n.parent) byId[n.parent].kids.push(n.key); return n};
+  add({key:'root',type:'root',label:'Стастрекер',parent:null});
+  add({key:'inbox',type:'inbox',label:'Место хаоса',parent:'root'});
+  const collapsed=ui.mapCollapsed||{};
+  const addTask=(t,pk)=>add({key:'t:'+t.id,type:'task',kind:'tasks',rec:t,label:t.title||'Без названия',parent:pk});
+  const addProject=(p,pk)=>{
+    if(p.status==='finished') return;
+    const n=add({key:'p:'+p.id,type:'project',kind:'projects',rec:p,label:p.name,parent:pk});
+    if(!collapsed[p.id]) for(const t of sortTasks(all('tasks').filter(t=>t.projectId===p.id&&!t.done))) addTask(t,n.key);
+  };
+  const addFolder=(f,pk)=>{
+    const n=add({key:'f:'+f.id,type:'folder',kind:'folders',rec:f,label:f.name,parent:pk});
+    for(const c of children('folders',f.id)) addFolder(c,n.key);
+    for(const p of projectsIn(f.id)) addProject(p,n.key);
+  };
+  for(const f of children('folders',null)) addFolder(f,'root');
+  for(const p of projectsIn(null)) addProject(p,'root');
+  for(const t of sortTasks(all('tasks').filter(t=>!t.projectId&&!t.done))) addTask(t,'inbox');
+  return {nodes,byId};
+}
+function mapLayout(m){
+  const H={};
+  const hOf=k=>{const n=m.byId[k], own=NS[n.type][1]; if(!n.kids.length) return H[k]=own; const s=n.kids.reduce((a,c)=>a+hOf(c),0)+MGY*(n.kids.length-1); return H[k]=Math.max(own,s)};
+  hOf('root');
+  const root=m.byId.root; root.x=0; root.y=0;
+  const place=(k,x,y,dir)=>{
+    const n=m.byId[k], sp=n.rec&&n.rec.mapPos;
+    if(sp&&typeof sp.x==='number'){x=sp.x; y=sp.y; dir=x>=m.byId[n.parent].x?1:-1}
+    n.x=x; n.y=y; n.dir=dir;
+    const w=NS[n.type][0], tot=n.kids.reduce((a,c)=>a+H[c],0)+MGY*Math.max(0,n.kids.length-1);
+    let top=y-tot/2;
+    for(const c of n.kids){const cw=NS[m.byId[c].type][0]; place(c,x+dir*(w/2+MGX+cw/2),top+H[c]/2,dir); top+=H[c]+MGY}
+  };
+  let R=[],L=[],hr=0,hl=0;
+  for(const k of root.kids){ if(hr<=hl){R.push(k);hr+=H[k]+MGY*2}else{L.push(k);hl+=H[k]+MGY*2} }
+  const side=(arr,dir)=>{const tot=arr.reduce((a,c)=>a+H[c],0)+MGY*2*Math.max(0,arr.length-1); let top=-tot/2; for(const c of arr){const cw=NS[m.byId[c].type][0]; place(c,dir*(NS.root[0]/2+MGX*1.5+cw/2),top+H[c]/2,dir); top+=H[c]+MGY*2}};
+  side(R,1); side(L,-1);
+}
+function mapNodeHTML(n,m){
+  const [w,h]=NS[n.type], left=Math.round(n.x-w/2), top=Math.round(n.y-h/2);
+  const isLeft=n.type!=='root'&&n.x<m.byId[n.parent].x;
+  const pos=`left:${left}px;top:${top}px;width:${w}px;height:${h}px`;
+  const add=(label)=>`<button class="mn-add" data-act="map-add" data-key="${n.key}" aria-label="${label}">${ICON.plus}</button>`;
+  const name=`<span class="mn-name">${esc(n.label)}</span>`;
+  if(n.type==='root') return `<div class="mn mn-root" data-key="root" tabindex="0" style="${pos}" title="Двойной клик — по центру">${name}${add('Добавить категорию, проект или задачу')}</div>`;
+  const cls=`mn mn-${n.type}${isLeft?' is-left':''}`;
+  if(n.type==='inbox') return `<div class="${cls}" data-key="inbox" tabindex="0" style="${pos}" title="Место хаоса">${F(P.tray,18)}${name}${add('Новая задача в Место хаоса')}</div>`;
+  if(n.type==='folder') return `<div class="${cls}" data-key="${n.key}" tabindex="0" style="${pos}" title="${esc(n.label)}">${F(P.folder,18)}${name}${add('Добавить в категорию')}</div>`;
+  if(n.type==='project'){
+    const p=n.rec, own=all('tasks').filter(t=>t.projectId===p.id&&!t.repeatOf), open=own.filter(t=>!t.done).length, pct=own.length?Math.round((own.length-open)/own.length*100):0;
+    const col=!!(ui.mapCollapsed||{})[p.id];
+    return `<div class="${cls}${p.status==='paused'?' is-paused':''}" data-key="${n.key}" tabindex="0" style="${pos}" title="${esc(p.goal||p.name)}">${F(P.doc,18)}<span class="mn-col"><span class="mn-name">${esc(n.label)}</span><span class="mn-meta">${String(open).padStart(2,'0')} откр · ${pct}%${p.status==='paused'?' · пауза':''}</span></span>${open?`<button class="mn-fold" data-act="map-fold" data-id="${p.id}" aria-label="${col?'Показать задачи':'Скрыть задачи'}" aria-expanded="${!col}">${col?ICON.chevR:ICON.chevD}</button>`:''}${add('Новая задача в проекте')}</div>`;
+  }
+  const t=n.rec, today=todayISO();
+  const due=t.date?`<span class="mn-due${t.date<today?' is-over':t.date===today?' is-today':''}">${esc(fmtDate(t.date))}</span>`:'';
+  return `<div class="${cls}" data-key="${n.key}" tabindex="0" style="${pos}" title="${esc(n.label)}"><button class="check" data-act="toggle-done" data-id="${t.id}" aria-pressed="false" aria-label="Отметить выполненной">${ICON.check}</button><span class="mn-col"><span class="mn-name">${esc(n.label)}</span>${due}</span>${t.repeat?`<span class="mn-rep" aria-label="Повтор">${ICON.rep}</span>`:''}</div>`;
+}
+function drawEdges(){
+  const m=MAP.m, svg=$('#map-edges'); if(!m||!svg) return;
+  let h='';
+  for(const n of m.nodes){ if(!n.parent) continue;
+    const p=m.byId[n.parent], dir=n.x>=p.x?1:-1;
+    const x1=p.x+dir*NS[p.type][0]/2, y1=p.y, x2=n.x-dir*NS[n.type][0]/2, y2=n.y, dx=(x2-x1)/2;
+    h+=`<path class="${p.type==='root'?'e-main':''}" d="M${x1.toFixed(1)} ${y1.toFixed(1)}C${(x1+dx).toFixed(1)} ${y1.toFixed(1)} ${(x2-dx).toFixed(1)} ${y2.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}"/>`;
+  }
+  svg.innerHTML=h;
+}
+function applyView(){
+  const wrap=$('#map-wrap'), st=$('#map-stage'); if(!wrap||!st) return;
+  const W=wrap.clientWidth, Hh=wrap.clientHeight, ox=W/2+MAP.tx, oy=Hh/2+MAP.ty;
+  st.style.transform=`translate(${ox}px,${oy}px) scale(${MAP.k})`;
+  wrap.style.backgroundPosition=`${ox}px ${oy}px`; wrap.style.backgroundSize=`${24*MAP.k}px ${24*MAP.k}px`;
+}
+function saveView(){clearTimeout(MAP.viewTimer); MAP.viewTimer=setTimeout(()=>{ui.mapView={tx:Math.round(MAP.tx),ty:Math.round(MAP.ty),k:MAP.k}; saveUI()},300)}
+function zoomAt(nk,cx,cy){
+  const wrap=$('#map-wrap'); if(!wrap) return;
+  nk=Math.min(2,Math.max(.3,nk));
+  const W=wrap.clientWidth, Hh=wrap.clientHeight;
+  if(cx==null){cx=W/2; cy=Hh/2}
+  const wx=(cx-W/2-MAP.tx)/MAP.k, wy=(cy-Hh/2-MAP.ty)/MAP.k;
+  MAP.k=nk; MAP.tx=cx-W/2-wx*nk; MAP.ty=cy-Hh/2-wy*nk; applyView(); saveView();
+}
+function mapFit(){
+  const wrap=$('#map-wrap'); if(!wrap||!MAP.m) return;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const n of MAP.m.nodes){const [w,h]=NS[n.type]; x0=Math.min(x0,n.x-w/2-14); x1=Math.max(x1,n.x+w/2+14); y0=Math.min(y0,n.y-h/2); y1=Math.max(y1,n.y+h/2)}
+  const W=wrap.clientWidth, Hh=wrap.clientHeight, pad=56;
+  const k=Math.min(1.2,Math.max(.6,Math.min((W-pad*2)/(x1-x0),(Hh-pad*2-40)/(y1-y0))));
+  MAP.k=k; MAP.tx=-(x0+x1)/2*k; MAP.ty=-(y0+y1)/2*k+8; applyView(); saveView();
+}
+function drawMap(){
+  const wrap=$('#map-wrap'); if(!wrap) return;
+  let fit=false;
+  if(!MAP.init){const v=ui.mapView; if(v){MAP.tx=v.tx||0; MAP.ty=v.ty||0; MAP.k=v.k||1} else fit=true; MAP.init=true}
+  const m=mapModel(); mapLayout(m); MAP.m=m;
+  $('#map-nodes').innerHTML=m.nodes.map(n=>mapNodeHTML(n,m)).join('');
+  drawEdges(); if(fit) mapFit(); else applyView();
+  wrap.addEventListener('wheel',e=>{
+    e.preventDefault(); const r=wrap.getBoundingClientRect();
+    if(e.ctrlKey||e.metaKey) zoomAt(MAP.k*Math.exp(-e.deltaY*0.0025),e.clientX-r.left,e.clientY-r.top);
+    else {MAP.tx-=e.deltaX; MAP.ty-=e.deltaY; applyView(); saveView()}
+  },{passive:false});
+  wrap.addEventListener('pointerdown',mapDown);
+  wrap.addEventListener('dblclick',e=>{const el=e.target.closest('.mn'); if(el&&!e.target.closest('button')) mapOpen(el.dataset.key,false)});
+}
+function mapOpen(key,keyboard){
+  const n=MAP.m&&MAP.m.byId[key]; if(!n) return;
+  if(n.type==='task') openEditor(n.rec.id);
+  else if(n.type==='project') go({view:'project',id:n.rec.id});
+  else if(n.type==='folder') go({view:'folder',id:n.rec.id});
+  else if(n.type==='inbox') go({view:'inbox'});
+  else if(n.type==='root'&&!keyboard){MAP.tx=0;MAP.ty=0;applyView();saveView()}
+}
+function mapGroup(key){const out=[], walk=k=>{out.push(k); for(const c of MAP.m.byId[k].kids) walk(c)}; walk(key); return out}
+function mapDrop(sk,tk){
+  const s=MAP.m.byId[sk], t=MAP.m.byId[tk]; if(!s||!t) return null;
+  if(s.type==='task'){ if(t.type==='project'||t.type==='inbox') return t; if(t.type==='task') return MAP.m.byId[t.parent] }
+  if(s.type==='project'||s.type==='folder'){ if(t.type==='folder'||t.type==='root') return t }
+  return null;
+}
+function mapDown(e){
+  if(e.pointerType==='mouse'&&e.button!==0) return;
+  if(e.target.closest('button')) return;
+  const el=e.target.closest('.mn');
+  if(el&&el.dataset.key!=='root'){
+    const key=el.dataset.key, group=mapGroup(key);
+    MAP.drag={key,sx:e.clientX,sy:e.clientY,moved:false,group,orig:group.map(k=>({k,x:MAP.m.byId[k].x,y:MAP.m.byId[k].y})),target:null};
+  } else {
+    MAP.pan={sx:e.clientX,sy:e.clientY,tx:MAP.tx,ty:MAP.ty,moved:false};
+    $('#map-wrap').classList.add('is-panning');
+  }
+}
+function mapNodeEl(k){return document.querySelector(`#map-nodes .mn[data-key="${k}"]`)}
+window.addEventListener('pointermove',e=>{
+  if(MAP.pan){ if(Math.hypot(e.clientX-MAP.pan.sx,e.clientY-MAP.pan.sy)>3) MAP.pan.moved=true; MAP.tx=MAP.pan.tx+e.clientX-MAP.pan.sx; MAP.ty=MAP.pan.ty+e.clientY-MAP.pan.sy; applyView(); return }
+  const d=MAP.drag; if(!d) return;
+  if(!d.moved){ if(Math.hypot(e.clientX-d.sx,e.clientY-d.sy)<5) return; d.moved=true; d.group.forEach(k=>{const el=mapNodeEl(k); if(el) el.classList.add('is-dragging')}) }
+  const dx=(e.clientX-d.sx)/MAP.k, dy=(e.clientY-d.sy)/MAP.k;
+  for(const o of d.orig){const n=MAP.m.byId[o.k]; n.x=o.x+dx; n.y=o.y+dy; const el=mapNodeEl(o.k); if(el){const [w,h]=NS[n.type]; el.style.left=Math.round(n.x-w/2)+'px'; el.style.top=Math.round(n.y-h/2)+'px'}}
+  drawEdges();
+  let tk=null;
+  for(const x of document.elementsFromPoint(e.clientX,e.clientY)){const mn=x.closest&&x.closest('#map-nodes .mn'); if(mn&&!d.group.includes(mn.dataset.key)){tk=mn.dataset.key; break}}
+  const t=tk?mapDrop(d.key,tk):null; d.target=t;
+  document.querySelectorAll('#map-nodes .mn.is-drop').forEach(x=>x.classList.remove('is-drop'));
+  if(t){const el=mapNodeEl(t.key); if(el) el.classList.add('is-drop')}
+});
+window.addEventListener('pointerup',()=>{
+  if(MAP.pan){ MAP.pan=null; const w=$('#map-wrap'); if(w) w.classList.remove('is-panning'); saveView(); if(MAP.dirty){MAP.dirty=false; renderMain()} return }
+  const d=MAP.drag; if(!d) return; MAP.drag=null;
+  if(!d.moved){ const n=MAP.m.byId[d.key]; if(n&&n.type==='task') openEditor(n.rec.id); if(MAP.dirty){MAP.dirty=false; renderMain()} return }
+  MAP.suppress=true; setTimeout(()=>{MAP.suppress=false},0);
+  const s=MAP.m.byId[d.key], t=d.target, moving=t&&s.parent!==t.key;
+  for(const k of d.group){const n=MAP.m.byId[k]; if(n.rec) patch(n.kind,n.rec.id,{mapPos:moving?null:{x:Math.round(n.x),y:Math.round(n.y)}})}
+  if(moving){
+    if(s.type==='task') patch('tasks',s.rec.id,{projectId:t.type==='project'?t.rec.id:null});
+    else if(s.type==='project') patch('projects',s.rec.id,{folderId:t.type==='folder'?t.rec.id:null});
+    else if(s.type==='folder') patch('folders',s.rec.id,{parentId:t.type==='folder'?t.rec.id:null});
+    toast(t.type==='root'?'Перенесено на верхний уровень':`Перенесено в «${t.label}»`);
+  }
+  MAP.dirty=false; render();
+});
+window.addEventListener('resize',()=>{if(route.view==='map') applyView()});
+
 /* ================= FAB: contextual create ================= */
 function fabOptions(){
   const v=route.view, t=todayISO();
@@ -1015,7 +1236,7 @@ function fabOptions(){
   const proj=fid=>({label:'Проект',icon:P.doc,fn:()=>projectModal(null,fid)});
   const ctx=pid=>({label:pid?'Вложенный контекст':'Контекст',icon:P.pin,fn:()=>contextModal(null,false,pid)});
   switch(v){
-    case 'home': return [task('Задача',{}),proj(null),cat(null),ctx(null)];
+    case 'home': case 'map': return [task('Задача',{}),proj(null),cat(null),ctx(null)];
     case 'projects': return [cat(null),proj(null)];
     case 'folder': return [cat(route.id),proj(route.id)];
     case 'project': return [task('Задача',{projectId:route.id}),task('Задача на сегодня',{projectId:route.id,date:t})];
@@ -1025,8 +1246,8 @@ function fabOptions(){
     default: return [task('Задача',{})];
   }
 }
-function openFab(){
-  fabItems=fabOptions();
+function openFab(list){
+  fabItems=list||fabOptions();
   if(fabItems.length===1){fabItems[0].fn();return}
   fabOpen=true;
   const item=(x,i,big)=>`<button class="arc-item${big?' is-primary':''}" role="menuitem" data-act="fab-item" data-i="${i}"><span class="arc-ic">${F(x.icon,big?38:26)}</span><span class="arc-label">${esc(x.label)}</span></button>`;
@@ -1311,7 +1532,7 @@ function folderModal(f,parentId){
       if(!needName(v)) return false;
       const parent=v.parent||null;
       if(f){patch('folders',f.id,{name:v.name.trim(),parentId:parent});render()}
-      else{const n=create('folders',{name:v.name.trim(),parentId:parent}); if(parent){ui.collapsed[parent]=false;saveUI()} setTimeout(()=>go({view:'folder',id:n.id}),0)}
+      else{const n=create('folders',{name:v.name.trim(),parentId:parent}); if(parent){ui.collapsed[parent]=false;saveUI()} stayOrGo({view:'folder',id:n.id})}
     }
   });
 }
@@ -1339,7 +1560,7 @@ function projectModal(p,folderId){
       if(!needName(v)) return false;
       const fields={name:v.name.trim(),goal:v.goal.trim(),folderId:v.folder||null,status:v.status||'active'};
       if(p){patch('projects',p.id,fields);render()}
-      else{const n=create('projects',fields); if(fields.folderId){ui.collapsed[fields.folderId]=false;saveUI()} setTimeout(()=>go({view:'project',id:n.id}),0)}
+      else{const n=create('projects',fields); if(fields.folderId){ui.collapsed[fields.folderId]=false;saveUI()} stayOrGo({view:'project',id:n.id})}
     }
   });
 }
@@ -1503,6 +1724,7 @@ function closeDrawer(){$('#side').classList.remove('is-open');$('#scrim').hidden
 function render(){renderSide();renderMain();renderEditor();renderBottom()}
 
 document.addEventListener('click',e=>{
+  if(MAP.suppress&&e.target.closest&&e.target.closest('#map-wrap')) return;
   const b=e.target.closest('[data-act]'); if(!b) return;
   const a=b.dataset.act, id=b.dataset.id;
   switch(a){
@@ -1578,6 +1800,18 @@ document.addEventListener('click',e=>{
     case 'logout': closeDrawer(); logout(); break;
     case 'clear-examples': closeDrawer(); clearExamples(); break;
     case 'fab': fabOpen?closeFab():openFab(); break;
+    case 'map-add': {
+      const n=MAP.m&&MAP.m.byId[b.dataset.key]; if(!n) break;
+      if(n.type==='root') openFab([{label:'Задача',icon:P.taskAdd,fn:()=>taskSheet({})},{label:'Проект',icon:P.doc,fn:()=>projectModal(null,null)},{label:'Категория',icon:P.folder,fn:()=>folderModal(null,null)}]);
+      else if(n.type==='folder') openFab([{label:'Подкатегория',icon:P.folder,fn:()=>folderModal(null,n.rec.id)},{label:'Проект',icon:P.doc,fn:()=>projectModal(null,n.rec.id)}]);
+      else if(n.type==='project') taskSheet({projectId:n.rec.id});
+      else if(n.type==='inbox') taskSheet({});
+      break;
+    }
+    case 'map-fold': ui.mapCollapsed=ui.mapCollapsed||{}; ui.mapCollapsed[id]=!ui.mapCollapsed[id]; saveUI(); renderMain(); break;
+    case 'map-zoom': zoomAt(MAP.k*(Number(b.dataset.v)>0?1.2:1/1.2)); break;
+    case 'map-fit': mapFit(); break;
+    case 'map-reset': confirmModal('Разложить заново?','Ручная раскладка сбросится, и карта разложится автоматически. Проекты и задачи останутся на своих местах в структуре.','Разложить',()=>{for(const k of ['folders','projects','tasks']) for(const r of all(k)) if(r.mapPos) patch(k,r.id,{mapPos:null}); render(); mapFit()}); break;
     case 'fab-close': closeFab(); break;
     case 'fab-item': { const x=fabItems[Number(b.dataset.i)]; closeFab(); if(x) x.fn(); break; }
     case 'tok': insertToken($('#m-title'),b.dataset.v); break;
@@ -1608,6 +1842,7 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('keydown',e=>{
   if(e.target&&e.target.id==='ed-title'&&e.key==='Enter'){e.preventDefault();e.target.blur()}
+  if(e.key==='Enter'&&e.target&&e.target.classList&&e.target.classList.contains('mn')){e.preventDefault(); mapOpen(e.target.dataset.key, true)}
   if(e.key==='Escape'){
     if(!$('#modal').hidden) closeModal();
     else if(fabOpen) closeFab();
