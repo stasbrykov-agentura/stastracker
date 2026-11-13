@@ -446,6 +446,25 @@ p{margin:0}
 .chip-rep{color:var(--accent)}
 .task.is-ghost{opacity:.5}
 .check.is-ghost{border-style:dashed}
+.cl-head{display:flex;justify-content:space-between;align-items:baseline}
+.cl-count{font-family:var(--f-mono);font-size:12px;color:var(--accent)}
+.cl-bar{height:3px;border-radius:2px;background:var(--surface-3);overflow:hidden}
+.cl-bar i{display:block;height:100%;background:var(--accent)}
+.cl-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.cl-item{display:flex;align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid #2a2925}
+.cl-item .check{width:18px;height:18px;flex:none}
+.cl-text{flex:1;min-width:0;background:transparent;border:0;outline:none;padding:7px 0;font-size:15px;color:var(--fg-hi)}
+.cl-text:focus{box-shadow:0 1px 0 var(--accent)}
+.cl-item.is-done .cl-text{color:var(--muted);text-decoration:line-through}
+.cl-del{width:30px;height:30px;display:grid;place-items:center;border-radius:6px;color:var(--muted);flex:none;opacity:.6}
+.cl-del:hover{opacity:1;background:var(--surface-2);color:var(--danger)}
+.cl-new{display:flex;align-items:center;gap:10px;padding:2px 0}
+.cl-new input{flex:1;min-width:0;background:transparent;border:0;border-bottom:1px dashed var(--line);outline:none;padding:9px 0;font-size:15px;color:var(--fg)}
+.cl-new input:focus{border-bottom-color:var(--accent)}
+.field .cl-text,.field .cl-text:focus{background:transparent;border:0;border-radius:0;padding:8px 0}
+.field .cl-text:focus{box-shadow:0 1px 0 var(--accent)}
+.field .cl-new input{background:transparent;border:0;border-bottom:1px dashed var(--line);border-radius:0;padding:9px 0}
+.field .cl-new input:focus{border-bottom-color:var(--accent)}
 .scale{display:flex;flex-direction:column;gap:6px;margin-top:6px}
 .scale-nums{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:10.5px;color:var(--muted)}
 .scale-track{position:relative;height:12px}
@@ -696,6 +715,7 @@ const ICON={
   starFill:`<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${P.star}</svg>`,
   db:S('<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/>',18),
   edit:S('<path d="M4 20h4L19 9l-4-4L4 16z"/>',16),
+  clList:S('<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12l3 3 5-6"/>',12),
   map:S('<circle cx="12" cy="12" r="2.6"/><circle cx="4.5" cy="6" r="1.8"/><circle cx="19.5" cy="6" r="1.8"/><circle cx="4.5" cy="18" r="1.8"/><circle cx="19.5" cy="18" r="1.8"/><path d="M10 10.6L6 7.2M14 10.6L18 7.2M10 13.4L6 16.8M14 13.4L18 16.8"/>',18),
   rep:S('<path d="M17 3l3 3-3 3"/><path d="M20 6H9a5 5 0 0 0-5 5v1"/><path d="M7 21l-3-3 3-3"/><path d="M4 18h11a5 5 0 0 0 5-5v-1"/>',12),
   repMd:S('<path d="M17 3l3 3-3 3"/><path d="M20 6H9a5 5 0 0 0-5 5v1"/><path d="M7 21l-3-3 3-3"/><path d="M4 18h11a5 5 0 0 0 5-5v-1"/>',18)
@@ -827,6 +847,7 @@ function taskRow(t,opts){
     chips.push(`<span class="chip chip-date${cls}">${esc(fmtDate(t.date))}${t.time?' · '+esc(t.time):''}</span>`);
   } else if(t.time){ chips.push(`<span class="chip chip-date">${esc(t.time)}</span>`) }
   if(t.duration) chips.push(`<span class="chip chip-date">${ICON.clock}${fmtDur(t.duration)}</span>`);
+  if(t.checklist&&t.checklist.length){const c=clStats(t); chips.push(`<span class="chip chip-date${c.d===c.n?' is-today':''}">${ICON.clList}${c.d}/${c.n}</span>`)}
   if(t.repeat&&!t.done) chips.push(`<span class="chip chip-rep">${ICON.rep}${esc(repText(t.repeat))}</span>`);
   for(const cid of (t.contexts||[])){const c=get('contexts',cid); if(c) chips.push(`<span class="chip chip-ctx">@${esc(c.name)}</span>`)}
   if(t.note&&t.note.trim()) chips.push(`<span class="chip" title="Есть заметка">${ICON.note}</span>`);
@@ -1120,7 +1141,7 @@ function mapNodeHTML(n,m){
   }
   const t=n.rec, today=todayISO();
   const due=t.date?`<span class="mn-due${t.date<today?' is-over':t.date===today?' is-today':''}">${esc(fmtDate(t.date))}</span>`:'';
-  return `<div class="${cls}" data-key="${n.key}" tabindex="0" style="${pos}" title="${esc(n.label)}"><button class="check" data-act="toggle-done" data-id="${t.id}" aria-pressed="false" aria-label="Отметить выполненной">${ICON.check}</button><span class="mn-col"><span class="mn-name">${esc(n.label)}</span>${due}</span>${t.repeat?`<span class="mn-rep" aria-label="Повтор">${ICON.rep}</span>`:''}</div>`;
+  return `<div class="${cls}" data-key="${n.key}" tabindex="0" style="${pos}" title="${esc(n.label)}"><button class="check" data-act="toggle-done" data-id="${t.id}" aria-pressed="false" aria-label="Отметить выполненной">${ICON.check}</button><span class="mn-col"><span class="mn-name">${esc(n.label)}</span>${due||t.checklist&&t.checklist.length?`<span class="mn-due">${due?due.replace(/^<span[^>]*>|<\/span>$/g,''):''}${t.checklist&&t.checklist.length?`${due?' · ':''}${clStats(t).d}/${clStats(t).n}`:''}</span>`:''}</span>${t.repeat?`<span class="mn-rep" aria-label="Повтор">${ICON.rep}</span>`:''}</div>`;
 }
 function drawEdges(){
   const m=MAP.m, svg=$('#map-edges'); if(!m||!svg) return;
@@ -1337,6 +1358,7 @@ function renderEditor(force){
     ${edPicker==='time'?timeHTML(t.time):''}${edPicker==='dur'?durHTML(t.duration):''}
     <div class="field"><span class="field-label">Повтор</span><button class="picker-btn${t.repeat?'':' is-empty'}" data-act="pick" data-p="rep" aria-expanded="${edPicker==='rep'}">${ICON.repMd}<span class="pb-val">${esc(repText(t.repeat))}</span>${edPicker==='rep'?ICON.chevU:ICON.chevD}</button>${edPicker==='rep'?repHTML(t):''}</div>
     <div class="field"><span class="field-label">Контексты</span><div class="ctx-picks">${ctxs.map(({r,d})=>`<button class="ctx-pick" data-act="ed-ctx" data-id="${r.id}" aria-pressed="${(t.contexts||[]).includes(r.id)}">${d?'↳ ':''}@${esc(r.name)}</button>`).join('')}<button class="ctx-pick is-add" data-act="new-context" data-for-task="1">+ новый</button></div></div>
+    <div class="field" id="cl-field">${checklistHTML(t)}</div>
     <label class="field" for="ed-note"><span class="field-label">Заметка</span><textarea id="ed-note" rows="6" placeholder="Детали, ссылки, мысли">${esc(t.note||'')}</textarea></label>
     <div class="ed-foot"><span class="ed-stamp" id="ed-stamp">${stampText(t)}</span><div id="ed-del">${delBlock()}</div></div>
   </div>`;
@@ -1485,6 +1507,26 @@ function moveDate(t,d){
 }
 function curRule(t){return t.repeat?JSON.parse(JSON.stringify(t.repeat)):makeRule('week',t.date||todayISO())}
 function afterRule(){renderSide(); renderMain(); renderEditor(true)}
+function clStats(t){const l=t.checklist||[]; return {n:l.length,d:l.filter(x=>x.done).length}}
+function checklistHTML(t){
+  const l=t.checklist||[], st=clStats(t);
+  return `<div class="cl-head"><span class="field-label">Чеклист</span>${st.n?`<span class="cl-count">${st.d} / ${st.n}</span>`:''}</div>
+  ${st.n?`<div class="cl-bar" aria-hidden="true"><i style="width:${Math.round(st.d/st.n*100)}%"></i></div>`:''}
+  <ul class="cl-list">${l.map(x=>`<li class="cl-item${x.done?' is-done':''}"><button class="check" data-act="cl-toggle" data-id="${x.id}" aria-pressed="${!!x.done}" aria-label="${x.done?'Снять отметку':'Отметить пункт'}">${ICON.check}</button><input class="cl-text" id="cl-${x.id}" data-cl="${x.id}" value="${esc(x.text)}" aria-label="Пункт чеклиста" enterkeyhint="next"><button class="cl-del" data-act="cl-del" data-id="${x.id}" aria-label="Удалить пункт">${ICON.close}</button></li>`).join('')}</ul>
+  <div class="cl-new"><span class="qa-plus">${ICON.plus}</span><input id="cl-new" placeholder="Добавить пункт" aria-label="Новый пункт чеклиста" enterkeyhint="done" autocomplete="off"></div>`;
+}
+function clSet(t,list,focus){
+  patch('tasks',t.id,{checklist:list});
+  const f=$('#cl-field'); if(f) f.innerHTML=checklistHTML(get('tasks',t.id));
+  renderMain();
+  if(focus){const el=document.getElementById(focus); if(el){el.focus(); try{const v=el.value.length; el.setSelectionRange(v,v)}catch(e){}}}
+}
+function clAdd(){
+  const t=get('tasks',editingId), inp=$('#cl-new'); if(!t||!inp) return;
+  const text=inp.value.trim(); if(!text) return;
+  const lines=text.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  clSet(t,[...(t.checklist||[]),...lines.map(x=>({id:uid().slice(0,8),text:x,done:false}))],'cl-new');
+}
 function autosize(el){if(!el)return;el.style.height='auto';el.style.height=el.scrollHeight+'px'}
 function openEditor(id){editingId=id; delConfirm=false; edPicker=null; calMonth=null; closeFab(); renderEditor(true); renderMain()}
 function closeEditor(){editingId=null;delConfirm=false;renderEditor();renderMain()}
@@ -1687,11 +1729,12 @@ function toggleDone(id){
   const t=get('tasks',id); if(!t) return;
   if(!t.done&&t.repeat){
     const today=todayISO(), prev=t.date, from=t.date||today;
-    const copy=create('tasks',{title:t.title,note:t.note||'',projectId:t.projectId||null,contexts:(t.contexts||[]).slice(),date:from,time:t.time||null,duration:t.duration||0,done:true,doneAt:Date.now(),repeatOf:t.id});
+    const copy=create('tasks',{title:t.title,note:t.note||'',projectId:t.projectId||null,contexts:(t.contexts||[]).slice(),date:from,time:t.time||null,duration:t.duration||0,done:true,doneAt:Date.now(),repeatOf:t.id,checklist:(t.checklist||[]).map(x=>({...x}))});
+    const prevList=t.checklist;
     const nx=nextAfter(t.repeat,from,today);
-    patch('tasks',id,{date:nx});
+    patch('tasks',id,Object.assign({date:nx},prevList&&prevList.length?{checklist:prevList.map(x=>({...x,done:false}))}:{}));
     render();
-    toast(`Выполнено. Следующий раз: ${fmtDate(nx)}`,'Вернуть',()=>{purge('tasks',copy.id); patch('tasks',id,{date:prev}); render()});
+    toast(`Выполнено. Следующий раз: ${fmtDate(nx)}`,'Вернуть',()=>{purge('tasks',copy.id); patch('tasks',id,Object.assign({date:prev},prevList?{checklist:prevList}:{})); render()});
     return;
   }
   const v=!t.done;
@@ -1750,6 +1793,8 @@ document.addEventListener('click',e=>{
     case 'time-h': { const t=get('tasks',editingId); if(!t) break; const mm=(t.time||'').split(':')[1]||'00'; patch('tasks',t.id,{time:`${b.dataset.v}:${mm}`}); renderMain(); renderEditor(true); break; }
     case 'time-m': { const t=get('tasks',editingId); if(!t) break; const hh=(t.time||'').split(':')[0]||'09'; patch('tasks',t.id,{time:`${hh}:${b.dataset.v}`}); edPicker=null; renderMain(); renderEditor(true); break; }
     case 'time-clear': patch('tasks',editingId,{time:null}); edPicker=null; renderMain(); renderEditor(true); break;
+    case 'cl-toggle': { const t=get('tasks',editingId); if(t) clSet(t,(t.checklist||[]).map(x=>x.id===id?{...x,done:!x.done}:x)); break; }
+    case 'cl-del': { const t=get('tasks',editingId); if(t) clSet(t,(t.checklist||[]).filter(x=>x.id!==id)); break; }
     case 'rep-preset': {
       const t=get('tasks',editingId); if(!t) break; const v=b.dataset.v, base=t.date||todayISO();
       let r=null;
@@ -1838,10 +1883,20 @@ document.addEventListener('input',e=>{
   const el=e.target;
   if(el.id==='ed-title'){ patch('tasks',editingId,{title:el.value.replace(/\n/g,' ')}); autosize(el); renderMain(); }
   else if(el.id==='ed-note'){ patch('tasks',editingId,{note:el.value}); }
+  else if(el.dataset&&el.dataset.cl){ const t=get('tasks',editingId); if(t) patch('tasks',t.id,{checklist:(t.checklist||[]).map(x=>x.id===el.dataset.cl?{...x,text:el.value}:x)}); }
   else if(el.id==='search-input'){ query=el.value; $('#search-results').innerHTML=searchResults(); }
 });
 document.addEventListener('keydown',e=>{
   if(e.target&&e.target.id==='ed-title'&&e.key==='Enter'){e.preventDefault();e.target.blur()}
+  if(e.target&&e.target.id==='cl-new'&&e.key==='Enter'&&!e.isComposing){e.preventDefault(); clAdd()}
+  if(e.target&&e.target.dataset&&e.target.dataset.cl&&!e.isComposing){
+    const t=get('tasks',editingId), id=e.target.dataset.cl;
+    if(t&&e.key==='Enter'){e.preventDefault(); const n=$('#cl-new'); if(n) n.focus()}
+    else if(t&&e.key==='Backspace'&&e.target.value===''){
+      e.preventDefault(); const l=t.checklist||[], i=l.findIndex(x=>x.id===id);
+      clSet(t,l.filter(x=>x.id!==id), i>0?'cl-'+l[i-1].id:'cl-new');
+    }
+  }
   if(e.key==='Enter'&&e.target&&e.target.classList&&e.target.classList.contains('mn')){e.preventDefault(); mapOpen(e.target.dataset.key, true)}
   if(e.key==='Escape'){
     if(!$('#modal').hidden) closeModal();
