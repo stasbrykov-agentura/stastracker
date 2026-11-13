@@ -461,10 +461,11 @@ p{margin:0}
 .cl-new{display:flex;align-items:center;gap:10px;padding:2px 0}
 .cl-new input{flex:1;min-width:0;background:transparent;border:0;border-bottom:1px dashed var(--line);outline:none;padding:9px 0;font-size:15px;color:var(--fg)}
 .cl-new input:focus{border-bottom-color:var(--accent)}
-.field .cl-text,.field .cl-text:focus{background:transparent;border:0;border-radius:0;padding:8px 0}
-.field .cl-text:focus{box-shadow:0 1px 0 var(--accent)}
-.field .cl-new input{background:transparent;border:0;border-bottom:1px dashed var(--line);border-radius:0;padding:9px 0}
-.field .cl-new input:focus{border-bottom-color:var(--accent)}
+.field .cl-item input.cl-text,.field .cl-item input.cl-text:focus{background:transparent;border:0;border-radius:0;padding:8px 0;font-size:16px;box-shadow:none}
+.field .cl-item input.cl-text:focus{box-shadow:0 1px 0 var(--accent)}
+.field .cl-new input#cl-new{background:transparent;border:0;border-bottom:1px dashed var(--line);border-radius:0;padding:9px 0;font-size:16px}
+.field .cl-new input#cl-new:focus{border-bottom-color:var(--accent)}
+.cl-new .qa-plus{width:18px;justify-content:center;flex:none}
 .scale{display:flex;flex-direction:column;gap:6px;margin-top:6px}
 .scale-nums{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:10.5px;color:var(--muted)}
 .scale-track{position:relative;height:12px}
